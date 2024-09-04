@@ -1,8 +1,25 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+
+from src.database import SessionLocal, engine
 
 app = FastAPI()
 
 
-@app.get("/")
-async def root():
-    return {"message": "placeholder json object"}
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+
+@app.get("/items/{item_id}")
+async def read_item(item_id , db: Session = Depends(get_db)):
+    return {"item_id": "Test Database connection"}
+
+
+
+
