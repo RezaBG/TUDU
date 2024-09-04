@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
-from database import SessionLocal, engine
+from src.database import SessionLocal, engine
 
 app = FastAPI()
 
@@ -18,7 +18,7 @@ def get_db():
 
 @app.get("/items/{item_id}")
 async def read_item(item_id , db: Session = Depends(get_db)):
-    return {"item_id": item_id}
+    return {"item_id": "Test Database connection"}
 
 
 
