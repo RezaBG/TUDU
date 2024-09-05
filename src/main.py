@@ -1,12 +1,13 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 
-from src.database import SessionLocal, engine
+from src import crud, models, schemas  
+from src.database import SessionLocal, engine 
 
+# Create the database tables
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
 
 # Dependency
 def get_db():
@@ -16,16 +17,14 @@ def get_db():
     finally:
         db.close()
 
-
-
-@app.get("/todos")
-async def read_item(db: Session = Depends(get_db)):
-    todos = crud.get_todos(db)
+# Route to get all todos
+@app.get("/todos", response_model=list[schemas.TodoRead])
+async def read_todos(db: Session = Depends(get_db)):
+    todos = crud.get_todo(db)
     return todos
 
-
-
-@app.post("/todos")
+# Route to create a new todo
+@app.post("/todos", response_model=schemas.TodoRead)
 def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
     return crud.create_todo(db=db, todo=todo)
 
