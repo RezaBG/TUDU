@@ -25,4 +25,7 @@ async def read_item(db: Session = Depends(get_db)):
 
 
 
+@app.post("/todos")
+def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+    return crud.create_todo(db=db, todo=todo)
 
