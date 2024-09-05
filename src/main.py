@@ -18,9 +18,10 @@ def get_db():
 
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id , db: Session = Depends(get_db)):
-    return {"item_id": "Test Database connection"}
+@app.get("/todos")
+async def read_item(db: Session = Depends(get_db)):
+    todos = crud.get_todos(db)
+    return todos
 
 
 
