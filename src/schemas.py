@@ -1,14 +1,16 @@
 from pydantic import BaseModel
 
-
-class TodoCreate(BaseModel):
+class TodoBase(BaseModel):
     title: str
     description: str
 
 
-class TodoRead(TodoCreate):
+class TodoCreate(TodoBase):
+    pass
+
+
+class TodoRead(TodoBase):
     id: int
 
     class Config:
         orm_mode = True
-
