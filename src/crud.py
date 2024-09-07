@@ -12,3 +12,15 @@ def create_todo(db: Session, todo: schemas.TodoCreate):
     db.commit()
     db.refresh(db_todo)
     return db_todo
+
+
+def update_todo(db: Session, todo_id: int, todo: schemas.TodoUpdate):
+    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).filter
+    if db_todo is None:
+        return None
+    db_todo.title = todo_data.title
+    db_todo.description = todo_data.description
+    db.commit()
+    db.refresh(db_todo)
+    return db_todo
+

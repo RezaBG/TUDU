@@ -14,3 +14,7 @@ class TodoRead(TodoBase):
 
     class Config:
         orm_mode = True
+
+
+class TodoUpdate(TodoBase):
+    pass
