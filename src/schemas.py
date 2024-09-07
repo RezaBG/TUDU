@@ -14,3 +14,9 @@ class TodoRead(TodoBase):
 
     class Config:
         orm_mode = True
+
+
+class TodoUpdate(TodoBase):
+    title: str
+    description: str
+    
