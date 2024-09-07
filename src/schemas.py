@@ -17,4 +17,5 @@ class TodoRead(TodoBase):
 
 
 class TodoUpdate(TodoBase):
-    pass
+    title: str
+    description: str
