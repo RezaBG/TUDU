@@ -19,3 +19,4 @@ class TodoRead(TodoBase):
 class TodoUpdate(TodoBase):
     title: str
     description: str
+    

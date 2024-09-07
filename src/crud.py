@@ -31,5 +31,4 @@ def delete_todo(db:Session, todo_id: int):
         return None
     db.delete(db_todo)
     db.commit()
-    return db_todo
-
+    return {"message": "Todo deleted"}

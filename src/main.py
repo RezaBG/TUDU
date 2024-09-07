@@ -35,7 +35,7 @@ def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depends(ge
         raise HTTPException(status_code= 404, detail="Todo not found - 404")
     return updated_todo
 
-@app.delete("/todos/{todo_id}", response_model=schemas.TodoRead)
+@app.delete("/todos/{todo_id}")
 def delete_todo(todo_id: int, db: Session = Depends(get_db)):
     deleted_todo = crud.delete_todo(db=db, todo_id=todo_id)
     if deleted_todo is None:
