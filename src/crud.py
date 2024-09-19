@@ -32,3 +32,6 @@ def delete_todo(db:Session, todo_id: int):
     db.delete(db_todo)
     db.commit()
     return {"message": "Todo deleted"}
+
+# add user models
+# add user models 2
