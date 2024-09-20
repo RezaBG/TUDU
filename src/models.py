@@ -9,6 +9,7 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     disabled = Column(Boolean, default=False)
+    random = Column(String, nullable=True)
 
     todos = relationship("Todo", back_populates="owner")
 
