@@ -33,5 +33,35 @@ def delete_todo(db:Session, todo_id: int):
     db.commit()
     return {"message": "Todo deleted"}
 
-# add user models
-# add user models 2
+
+def create_user(db: Session, user: schemas.UserCreate):
+    db_user = models.User(username=user.username, email=user.email, disabled=user.disabled)
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def get_user(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()
+
+def update_user(db: Session, user_id: int, user: schemas.UserUpdate):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        return None
+    db_user.username = user.username
+    db_user.email = user.email
+    db_user.disabled = user.disabled
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def delete_user(db: Session, user_id: int):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user is None:
+        return None
+    db.delete(db_user)
+    db.commit()
+    return {"message": "User deleted"}

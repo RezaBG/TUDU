@@ -41,3 +41,26 @@ def delete_todo(todo_id: int, db: Session = Depends(get_db)):
     if deleted_todo is None:
         raise HTTPException(status_code=404, detail="Todo not found - 404") 
     return deleted_todo
+
+@app.post("/register", response_model=schemas.UserRead)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    return crud.create_user(db=db, user=user)
+
+@app.get("/users/", response_model=list[schemas.UserRead])
+def read_users(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    return crud.get_users(db=db, skip=skip, limit=limit)
+
+@app.get("/users/{user_id}", response_model=schemas.UserRead)
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    read_user = crud.get_user(db=db, user_id=user_id)
+    if read_user is None:
+        raise HTTPException(status_code=404, detail="user not found - 404")
+    return read_user
+
+@app.put("/users/{user_id}", response_model=schemas.UserRead)
+def update_user(user_id: int, user: schemas.UserUpdate, db: Session = Depends(get_db)):
+    return crud.update_user(db=db, user_id=user_id, user=user)
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id: int, db: Session = Depends(get_db)):
+    return crud.delete_user(db=db, user_id=user_id)
