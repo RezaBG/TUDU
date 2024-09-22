@@ -26,6 +26,7 @@ class TodoBase(BaseModel):
     description: str
 
 class TodoCreate(TodoBase):
+    #user_id: int
     pass
 
 class TodoRead(TodoBase):

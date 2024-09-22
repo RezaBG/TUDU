@@ -19,13 +19,13 @@ def get_db():
 
 # Rouet a get all todos for the logged-in user
 @app.get("/todos", response_model=list[schemas.TodoRead])
-async def read_todos(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    return crud.get_user_todos(db=db, user_id=current_user.id)
+async def read_todos(db: Session = Depends(get_db)):
+    return crud.get_user_todos(db=db)
 
 # Route to create a new todo
 @app.post("/todos", response_model=schemas.TodoRead)
-def create_todo(todo: schemas.TodoCreate, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    return crud.create_todo(db=db, todo=todo, user_id=current_user.id)
+def create(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
+    return crud.create_todo(db=db, todo=todo)
 
 # Route to update an existing todo
 @app.put("/todos/{todo_id}", response_model=schemas.TodoRead)
