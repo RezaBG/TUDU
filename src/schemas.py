@@ -1,24 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
 
-# Todo Schemas
-class TodoBase(BaseModel):
-    title: str
-    description: str
-
-class TodoCreate(TodoBase):
-    pass
-
-class TodoRead(TodoBase):
-    id: int
-    owner: Optional["UserRead"]
-
-    class Config:
-        orm_mode = True
-
-class TodoUpdate(TodoBase):
-    pass
-
 # User Schemas
 class UserBase(BaseModel):
     username: str
@@ -36,6 +18,25 @@ class UserRead(UserBase):
 
 class UserUpdate(UserBase):
     disabled: bool
+
+
+# Todo Schemas
+class TodoBase(BaseModel):
+    title: str
+    description: str
+
+class TodoCreate(TodoBase):
+    pass
+
+class TodoRead(TodoBase):
+    id: int
+    owner: Optional["UserRead"]
+
+    class Config:
+        orm_mode = True
+
+class TodoUpdate(TodoBase):
+    pass
 
 # Import the UserRead at the bottom - Avoid circular imports
 # from .schemas import UserRead
