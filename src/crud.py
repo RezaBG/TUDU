@@ -1,6 +1,13 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
 from src.models import Todo
+from passlib.context import CryptContext
+
+# password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_password_hash(password: str) -> str: 
+    return pwd_context.hash(password)
 
 # Get all todos for a specific user
 def get_user_todos(db: Session, user_id: int):
@@ -36,7 +43,13 @@ def delete_todo(db:Session, todo_id: int):
 
 # Create a new user
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = models.User(username=user.username, email=user.email, disabled=user.disabled)
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(
+        username=user.username, 
+        email=user.email, 
+        hashed_password=hashed_password,
+        disabled=user.disabled
+        )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -71,4 +84,6 @@ def delete_user(db: Session, user_id: int):
     db.commit()
     return {"message": "User deleted"}
 
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
 ### this 
