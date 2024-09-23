@@ -13,7 +13,7 @@ from src.database import SessionLocal, engine
 # Secret key, algorithms, and expriation time for JWT
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # Password haching context (bcrypt)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -76,13 +76,13 @@ def get_current_user(db: Session = Depends(get_db), token: str = Depends(oauth2_
             raise credentials_exception
     except JWTError:
         raise credentials_exception
-    user = crud.get_user(db=db, username=username)
+    user = crud.get_user_by_username(db=db, username=username)
     if user is None:
         raise credentials_exception
     return user
 
 # Route to create a token (login)
-@app.post("/token", response_model=schemas.Token)
+@app.post("/login", response_model=schemas.Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
     if not user:
@@ -105,18 +105,18 @@ async def read_users_me(current_user: schemas.UserRead = Depends(get_current_use
 
 # Rouet a get all todos for the logged-in user
 @app.get("/todos", response_model=list[schemas.TodoRead])
-async def read_todos(db: Session = Depends(get_db)):
-    return crud.get_user_todos(db=db)
+async def read_todos(db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    return crud.get_user_todos(db=db, user_id=current_user.id)
 
 # Route to create a new todo
 @app.post("/todos", response_model=schemas.TodoRead)
-async def create(todo: schemas.TodoCreate, db: Session = Depends(get_db)):
-    return crud.create_todo(db=db, todo=todo)
+async def create(todo: schemas.TodoCreate, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    return crud.create_todo(db=db, todo=todo, user_id=current_user.id)
 
 # Route to update an existing todo
 @app.put("/todos/{todo_id}", response_model=schemas.TodoRead)
-async def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depends(get_db)):
-    updated_todo = crud.update_todo(db=db, todo_id=todo_id, todo=todo)
+async def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    updated_todo = crud.update_todo(db=db, todo_id=todo_id, todo=todo, user_id=current_user.id)
     if updated_todo is None:
         raise HTTPException(status_code= 404, detail="Todo not found - 404")
     return updated_todo
