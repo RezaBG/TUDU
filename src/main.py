@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Optional
+from fastapi.openapi.utils import get_openapi
 
 
 from src import crud, models, schemas  
@@ -25,6 +26,33 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+# Custom security definition for Bearer token
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="Your API",
+        version="1.0.0",
+        description="API that uses Bearer token",
+        routes=app.routes,
+    )
+    # Add custom security scheme to OpenAPI schema
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+    # Add global security requirement for all endpoints
+    openapi_schema["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+# Set the custom OpenAPI schema
+app.openapi = custom_openapi
+
 
 # Dependency to get a DB session
 def get_db():
