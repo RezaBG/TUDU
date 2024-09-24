@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Column, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from src.database import Base
 from sqlalchemy.orm import relationship
 
@@ -9,8 +9,9 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
     disabled = Column(Boolean, default=False)
+    hashed_password = Column(String)
 
-    todos = relationship("Todo", back_populates="owner")
+    todos = relationship("Todo", back_populates="owner", cascade="all, delete-orphan")
 
 class Todo(Base):
     __tablename__ = "todos"
