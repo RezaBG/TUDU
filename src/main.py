@@ -126,8 +126,8 @@ async def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depe
 
 # Route for delete todo
 @app.delete("/todos/{todo_id}")
-async def delete_todo(todo_id: int, db: Session = Depends(get_db)):
-    deleted_todo = crud.delete_todo(db=db, todo_id=todo_id)
+async def delete_todo(todo_id: int, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
+    deleted_todo = crud.delete_todo(db=db, todo_id=todo_id, user_id=current_user.id)
     if deleted_todo is None:
         raise HTTPException(status_code=404, detail="Todo not found - 404") 
     return deleted_todo
