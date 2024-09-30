@@ -49,13 +49,13 @@ export DATABASE_URL="postgresql+psycopg2://dev:dev@localhost/tudu"
 
 To set up the database table and apply any schema changes, run the Alembic migrations:
 
-1. Ensure Alembic is installed:
+5.1 Ensure Alembic is installed:
 
 ```bash
 pip install alembic
 ```
 
-2. Run the database migirations:
+5.2 Run the database migirations:
 
 ```bash
 alembic upgrade head
