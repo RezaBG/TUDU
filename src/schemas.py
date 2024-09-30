@@ -21,7 +21,7 @@ class UserRead(UserBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class UserUpdate(UserBase):
     disabled: bool
@@ -41,7 +41,7 @@ class TodoRead(TodoBase):
     owner: Optional["UserRead"]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TodoUpdate(TodoBase):
     pass
