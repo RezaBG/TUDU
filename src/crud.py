@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from . import models, schemas
 from src.models import Todo
 from passlib.context import CryptContext
@@ -43,6 +44,10 @@ def delete_todo(db:Session, todo_id: int):
 
 # Create a new user
 def create_user(db: Session, user: schemas.UserCreate):
+    existing_user = db.query(models.User).filter(models.User.username == user.username).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already taken")
+
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
         username=user.username, 
