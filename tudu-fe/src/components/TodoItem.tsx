@@ -5,7 +5,7 @@ interface TodoItemProps {
 
 const TodoItem = ({ title, description }: TodoItemProps) => {
   return (
-    <div>
+    <div className="todo-item">
       <h3>{title}</h3>
       <p>{description}</p>
     </div>
