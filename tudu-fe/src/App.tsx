@@ -8,9 +8,7 @@ function App() {
     { id: 3, title: "Build Todo App", description: "TUDU app" },
   ];
 
-  const handleAddTodo = () => {
-    console.log("Add Todo button clicked");
-  };
+  const handleAddTodo = () => {};
 
   return (
     <>
