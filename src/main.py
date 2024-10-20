@@ -11,7 +11,7 @@ from src import crud, models, schemas
 from src.database import SessionLocal, engine 
 
 # Secret key, algorithms, and expiration time for JWT
-SECRET_KEY = "your_secret_key"
+SECRET_KEY = "+6S0LwfV1GpngU2Vzphk6Hl0OH8bW3J8brTd0KjKhhjlauEjEds4qvltONWdF6ZPKwAwTECqdrR6AjCdaSbFdg=="
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
