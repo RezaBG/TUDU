@@ -5,16 +5,17 @@ from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Optional
+from fastapi.middleware.cors import CORSMiddleware
 
 from src import crud, models, schemas  
 from src.database import SessionLocal, engine 
 
-# Secret key, algorithms, and expriation time for JWT
-SECRET_KEY = "your_secret_key"
+# Secret key, algorithms, and expiration time for JWT
+SECRET_KEY = "+6S0LwfV1GpngU2Vzphk6Hl0OH8bW3J8brTd0KjKhhjlauEjEds4qvltONWdF6ZPKwAwTECqdrR6AjCdaSbFdg=="
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Password haching context (bcrypt)
+# Password hashing context (bcrypt)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme for token authentication
@@ -24,6 +25,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Dependency to get a DB session
 def get_db():
@@ -50,7 +59,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# Funciton to get user by username
+# Function to get user by username
 def get_user(db, username: str):
     return crud.get_user_by_username(db, username=username)
 
