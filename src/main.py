@@ -128,7 +128,7 @@ async def create(todo: schemas.TodoCreate, db: Session = Depends(get_db), curren
 # Route to update an existing todo
 @app.put("/todos/{todo_id}", response_model=schemas.TodoRead)
 async def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    updated_todo = crud.update_todo(db=db, todo_id=todo_id, todo=todo, user_id=current_user.id)
+    updated_todo = crud.update_todo(db=db, todo_id=todo_id, todo=todo)
     if updated_todo is None:
         raise HTTPException(status_code= 404, detail="Todo not found - 404")
     return updated_todo
@@ -136,7 +136,7 @@ async def update_todo(todo_id: int, todo: schemas.TodoUpdate, db: Session = Depe
 # Route for delete todo
 @app.delete("/todos/{todo_id}")
 async def delete_todo(todo_id: int, db: Session = Depends(get_db), current_user: schemas.UserRead = Depends(get_current_user)):
-    deleted_todo = crud.delete_todo(db=db, todo_id=todo_id, user_id=current_user.id)
+    deleted_todo = crud.delete_todo(db=db, todo_id=todo_id)
     if deleted_todo is None:
         raise HTTPException(status_code=404, detail="Todo not found - 404") 
     return deleted_todo
