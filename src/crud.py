@@ -23,10 +23,11 @@ def create_todo(db: Session, todo: schemas.TodoCreate, user_id: int):
     return db_todo
 
 # Update a todo based on its ID
-def update_todo(db: Session, todo_id: int, todo: schemas.TodoUpdate):
-    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id).first()
+def update_todo(db: Session, todo_id: int, todo: schemas.TodoUpdate, user_id: int):
+    db_todo = db.query(models.Todo).filter(models.Todo.id == todo_id, models.Todo.owner_id == user_id).first()
     if db_todo is None:
-        return None
+        raise HTTPException(status_code=404, detail="Todo not found or you do not have permission to update this todo")
+
     db_todo.title = todo.title
     db_todo.description = todo.description
     db.commit()
