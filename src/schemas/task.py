@@ -1,49 +1,21 @@
 from pydantic import BaseModel
 from typing import Optional
+from src.schemas.user import UserRead
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-class TokenData(BaseModel):
-    username: Optional[str] = None
-
-# User Schemas
-class UserBase(BaseModel):
-    username: str
-    email: str
-    disabled: bool = False
-
-class UserCreate(UserBase):
-    password: str
-
-class UserRead(UserBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-class UserUpdate(UserBase):
-    disabled: bool
-
-
-# Todo Schemas
-class TodoBase(BaseModel):
+class TaskBase(BaseModel):
     title: str
-    description: str
+    description: Optional[str] = None
 
-class TodoCreate(TodoBase):
-    pass
+class TaskCreate(TaskBase):
+    owner_id: int
 
-class TodoRead(TodoBase):
+class TaskRead(TaskBase):
     id: int
-    owner: Optional["UserRead"]
+    owner: Optional[UserRead] = None
 
     class Config:
         from_attributes = True
 
-class TodoUpdate(TodoBase):
-    pass
-
-# Update forward reference to avoid circular imports
-TodoRead.model_rebuild()
+class TaskUpdate(TaskBase):
+    title: Optional[str] = None
+    description: Optional[str] = None
