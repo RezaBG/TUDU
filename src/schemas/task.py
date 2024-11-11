@@ -33,7 +33,6 @@ class TodoBase(BaseModel):
     description: str
 
 class TodoCreate(TodoBase):
-    #user_id: int
     pass
 
 class TodoRead(TodoBase):
@@ -46,6 +45,5 @@ class TodoRead(TodoBase):
 class TodoUpdate(TodoBase):
     pass
 
-# Import the UserRead at the bottom - Avoid circular imports
-# from .schemas import UserRead
-TodoRead.update_forward_refs()
+# Update forward reference to avoid circular imports
+TodoRead.model_rebuild()
