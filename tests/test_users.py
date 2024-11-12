@@ -1,13 +1,15 @@
 import pytest
-import pytest_asyncio
+
 
 @pytest.mark.asyncio
 async def test_create_user(client):
     response = await client.post(
-        "/users", json={"username": "testuser", "email": "testuser@example.com", "password": "password123"}
+        "/users", json={"username": "testuser_unique", "email": "uniqueuser@example.com", "password": "password123"}
     )
+    print(f"Response status: {response.status_code}")
+    print(f"Response content: {response.json()}")
     assert response.status_code == 201
-    assert response.json()["username"] == "testuser"
+    assert response.json()["username"] == "testuser_unique"
 
 @pytest.mark.asyncio
 async def test_get_user(client):

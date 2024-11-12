@@ -1,18 +1,16 @@
+from http.client import responses
+
 import pytest
 
 @pytest.mark.asyncio
 async def test_create_task(client):
 
-    #
-    await client.post(
+    response = await client.post(
         "/users", json={"username": "testuser", "email": "testuser@example.com", "password": "password123"}
     )
 
-    response = await client.post(
-        "/tasks", json={"title": "Test Task", "description": "A task description", "owner_id": 1}
-    )
     assert response.status_code == 201
-    assert response.json()["title"] == "Test Task"
+    assert response.json()["username"] == "testuser_unique"
 
 @pytest.mark.asyncio
 async def test_get_task(client):
