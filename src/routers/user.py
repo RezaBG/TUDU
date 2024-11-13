@@ -5,13 +5,17 @@ from src.models import User
 from src.services.dependencies import get_db
 from src.services.task import get_password_hash
 
+
 router = APIRouter()
 
 @router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate , db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter_by(username = user.username).first()
+    existing_user = db.query(User).filter((User.username == user.username) | (User.email == user.email)).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        if existing_user.username == user.username:
+            raise HTTPException(status_code=400, detail="Username already exist")
+        if existing_user.email == user.email:
+            raise HTTPException(status_code=400, detail="Email already exists")
 
     hashed_password = get_password_hash(user.password)
 
@@ -22,9 +26,14 @@ def create_user(user: UserCreate , db: Session = Depends(get_db)):
         disabled=user.disabled,
     )
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    try:
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+    except IndentationError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Failed to create user due to a database constraint")
+
     return new_user
 
 @router.get("/users/{user_id}", response_model=UserRead)
