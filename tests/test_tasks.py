@@ -1,33 +1,49 @@
-from http.client import responses
-
 import pytest
+import pytest_asyncio
+
+@pytest_asyncio.fixture
+async def setup_task(client):
+    # Create the task
+    response = await client.post(
+        "/tasks", json={"title": "Test Task", "description": "Task Description", "owner_id": 1}
+    )
+    print(f"Task creation response: {response.status_code}")
+    print(f"Task creation content: {response.json()}")
+    assert response.status_code == 201
+    return response.json()
 
 @pytest.mark.asyncio
 async def test_create_task(client):
-
     response = await client.post(
-        "/users", json={"username": "testuser", "email": "testuser@example.com", "password": "password123"}
+        "/tasks",
+        json={
+            "title": "Test Task",
+            "owner_id": "1",
+            "description": "Task task",
+        },
     )
-
     assert response.status_code == 201
-    assert response.json()["username"] == "testuser_unique"
+    assert response.json()["title"] == "Test Task"
 
 @pytest.mark.asyncio
-async def test_get_task(client):
-    response = await client.get("/tasks/1")
+async def test_get_task(client, setup_task):
+    task_id = setup_task["id"]
+    response = await client.get(f"/tasks/{task_id}")
     assert response.status_code == 200
     assert response.json()["title"] == "Test Task"
 
 @pytest.mark.asyncio
-async def test_update_task(client):
+async def test_update_task(client, setup_task):
+    task_id = setup_task["id"]
     response = await client.put(
-        "/tasks/1",
-        json={"title": "Update Test Task", "description": "Updated task description", "owner_id": 1},
+        f"/tasks/{task_id}",
+        json={"title": "Updated Task", "description": "Updated Description", "owner_id": 1},
     )
     assert response.status_code == 200
-    assert response.json()["title"] == "Update Test Task"
+    assert response.json()["title"] == "Updated Task"
 
 @pytest.mark.asyncio
-async def test_delete_task(client):
-    response = await client.delete("/tasks/1")
+async def test_delete_task(client, setup_task):
+    task_id = setup_task["id"]
+    response = await client.delete(f"/tasks/{task_id}")
     assert response.status_code == 204

@@ -2,7 +2,8 @@
 import pytest_asyncio
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from src.main import app
 from src.services.database import Base, engine
 import os
@@ -29,3 +30,9 @@ def setup_db():
 async def client(setup_db):
     async with AsyncClient(app=app, base_url="http://test") as client:
         yield client
+
+@pytest.fixture(autouse=True)
+def reset_database():
+    Base.metadata.drop_all(bind=test_engine)
+    Base.metadata.create_all(bind=test_engine)
+
