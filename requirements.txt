@@ -30,6 +30,7 @@ httpx==0.27.0
 huggingface-hub==0.20.3
 humanfriendly==10.0
 idna==3.7
+iniconfig==2.0.0
 ipykernel==6.29.5
 ipython==8.26.0
 itsdangerous==2.2.0
@@ -68,6 +69,8 @@ pydantic-settings==2.4.0
 pydantic_core==2.20.1
 Pygments==2.18.0
 pytailwindcss==0.2.0
+pytest==8.3.3
+pytest-asyncio==0.24.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.0.1
 python-jose==3.3.0

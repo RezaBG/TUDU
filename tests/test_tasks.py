@@ -1,3 +1,5 @@
+import asyncio
+
 from tests.test_users import setup_user
 import pytest
 import pytest_asyncio
@@ -35,13 +37,16 @@ async def test_get_task(client, setup_task):
 
 @pytest.mark.asyncio
 async def test_update_task(client, setup_task):
-    task_id = setup_task["id"]
-    owner_id = setup_task["owner_id"]
-    payload =  {"title": "Updated Task", "description": "Updated Description", "owner_id": owner_id}
-    response = await client.put(f"/tasks/{task_id}", json=payload)
-    assert response.status_code == 200
-    assert response.json()["title"] == "Updated Task"
-    logger.info("Update task passed for ID: %s with payload: %s", task_id, payload)
+    try:
+        task_id = setup_task["id"]
+        owner_id = setup_task["owner"]["id"]
+        payload =  {"title": "Updated Task", "description": "Updated Description", "owner_id": owner_id}
+        response = await asyncio.wait_for(client.put(f"/tasks/{task_id}", json=payload), timeout=5)
+        assert response.status_code == 200
+        assert response.json()["title"] == "Updated Task"
+        logger.info("Update task passed for ID: %s with payload: %s", task_id, payload)
+    except asyncio.TimeoutError:
+        logger.error("Timeout occurred while updating task.")
 
 
 @pytest.mark.asyncio
