@@ -1,10 +1,12 @@
-import pytest_asyncio
-import pytest
-import uuid
 import logging
+import uuid
+
+import pytest
+import pytest_asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
 
 @pytest_asyncio.fixture
 async def setup_user(client):
@@ -14,9 +16,7 @@ async def setup_user(client):
         "email": f"testuser_{unique_id}@example.com",
         "password": "password123",
     }
-    response = await client.post(
-       "/users", json=payload
-    )
+    response = await client.post("/users", json=payload)
     logger.info("User creation response: %s", response.status_code)
     logger.info("User creation content: %s", response.json())
     assert response.status_code == 201

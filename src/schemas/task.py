@@ -1,13 +1,18 @@
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
 from src.schemas.user import UserRead
+
 
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
 
+
 class TaskCreate(TaskBase):
     owner_id: int
+
 
 class TaskRead(TaskBase):
     id: int
@@ -15,6 +20,7 @@ class TaskRead(TaskBase):
 
     class Config:
         from_attributes = True
+
 
 class TaskUpdate(TaskBase):
     title: Optional[str] = None
