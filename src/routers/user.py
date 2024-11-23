@@ -9,7 +9,12 @@ from src.services.task import get_password_hash
 router = APIRouter()
 
 
-@router.post("/users", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/users",
+             response_model=UserRead,
+             status_code=status.HTTP_201_CREATED,
+             summary="Create a User",
+             description="Register a new user by providing a unique username, email, and password."
+)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter_by(username=user.username).first()
     if existing_user:
@@ -30,7 +35,11 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 
-@router.get("/users/{user_id}", response_model=UserRead)
+@router.get("/users/{user_id}",
+            response_model=UserRead,
+            summary="Get a User by ID",
+            description="Fetch a user's details by their unique ID. Returns a 404 error if the user is not found."
+)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter_by(id=user_id).first()
     if user is None:
