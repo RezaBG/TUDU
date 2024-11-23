@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from src.schemas import TaskCreate, TaskRead, TaskUpdate
+
 from src.models import Task
+from src.schemas import TaskCreate, TaskRead, TaskUpdate
 from src.services.dependencies import get_db
 
-
 router = APIRouter()
+
 
 @router.post("/tasks", response_model=TaskRead, status_code=status.HTTP_201_CREATED)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
@@ -19,12 +20,16 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     db.refresh(new_task)
     return new_task
 
+
 @router.get("/tasks/{task_id}", response_model=TaskRead)
 def get_task(task_id: int, db: Session = Depends(get_db)):
     task = db.query(Task).filter_by(id=task_id).first()
     if task is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
+        )
     return task
+
 
 @router.put("/tasks/{task_id}", response_model=TaskRead)
 def update_task(task_id: int, task: TaskUpdate, db: Session = Depends(get_db)):

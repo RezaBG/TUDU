@@ -3,3 +3,4 @@ __pycache__
 guidline-postgres.txt
 .DS_Store
 .idea/
+test.db
