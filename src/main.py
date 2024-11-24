@@ -18,5 +18,5 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 # Include routers
-app.include_router(user_router)
-app.include_router(task_router)
+app.include_router(user_router, tags=["Users"])
+app.include_router(task_router, tags=["Tasks"])
