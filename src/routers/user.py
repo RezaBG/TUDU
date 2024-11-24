@@ -5,6 +5,7 @@ from src.models import User
 from src.schemas import UserCreate, UserRead
 from src.services.dependencies import get_db
 from src.services.task import get_password_hash
+from src.services.crud import get_item_by_id, create_item
 
 import logging
 
@@ -35,20 +36,16 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="User already exists")
 
     hashed_password = get_password_hash(user.password)
-
+    user_data = {
+        "username": user.username,
+        "email": user.email,
+        "hashed_password": hashed_password,
+        "disabled": user.disabled,
+    }
     logger.info(f"Creating user with username: '{user.username}'")
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        hashed_password=hashed_password,
-        disabled=user.disabled,
-    )
+    new_user = create_item(User, user_data, db)
 
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
-    logger.info(f"User '{user.username}' created successfully with ID {new_user.id}")
+    logger.info(f"User '{new_user.username}' created successfully with ID {new_user.id}")
     return new_user
 
 
@@ -62,8 +59,6 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
             },
 )
 def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).filter_by(id=user_id).first()
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+    user = get_item_by_id(User, user_id, db)
     logger.info(f"Retrieved user with ID: {user_id}")
     return user

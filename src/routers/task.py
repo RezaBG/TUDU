@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from src.models import Task
 from src.schemas import TaskCreate, TaskRead, TaskUpdate
 from src.services.dependencies import get_db
+from src.services.crud import get_item_by_id, create_item, delete_item
 
 import logging
 
@@ -29,16 +30,13 @@ router = APIRouter()
 )
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     logger.info(f"Creating task with title: {task.title}")
-    new_task = Task(
-        title=task.title,
-        description=task.description,
-        owner_id=task.owner_id,
-    )
-    db.add(new_task)
-    db.commit()
-    db.refresh(new_task)
-
-    logger.info(f"Task '{task.title}' created successfully with ID {new_task.id}")
+    task_data = {
+        "title": task.title,
+        "description": task.description,
+        "owner_id": task.owner_id,
+    }
+    new_task = create_item(Task, task_data, db)
+    logger.info(f"Task '{new_task.title}' created successfully with ID {new_task.id}")
     return new_task
 
 
@@ -52,12 +50,7 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
             },
 )
 def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter_by(id=task_id).first()
-    if task is None:
-        logger.info(f"Task with ID {task_id} not found")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+    task = get_item_by_id(Task, task_id, db)
     logger.info(f"Retrieved task with ID {task_id}: {task.title}")
     return task
 
@@ -73,11 +66,7 @@ def get_task(task_id: int, db: Session = Depends(get_db)):
             },
 )
 def update_task(task_id: int, task: TaskUpdate, db: Session = Depends(get_db)):
-    existing_task = db.query(Task).filter_by(id=task_id).first()
-    if existing_task is None:
-        logger.warning(f"Update failed: Task with ID {task_id} not found")
-        raise HTTPException(status_code=404, detail="Task not found")
-
+    existing_task = get_item_by_id(Task, task_id, db)
     logger.info(f"Updating Task ID {task_id}. Old title: {existing_task.title}, new title: {task.title}")
 
     existing_task.title = task.title
@@ -99,15 +88,7 @@ def update_task(task_id: int, task: TaskUpdate, db: Session = Depends(get_db)):
                },
 )
 def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(Task).filter_by(id=task_id).first()
-    if task is None:
-        logger.warning(f"Delete failed: Task with ID {task_id} not found")
-        raise HTTPException(status_code=404, detail="Task not found")
-
-    logger.info(f"Deleting Task ID {task_id}. Title: {task.title}")
-
-    db.delete(task)
-    db.commit()
-
+    logger.info(f"Deleting Task ID {task_id}")
+    delete_item(Task, task_id, db)
     logger.info(f"Task ID {task_id} deleted successfully")
     return {"message": "Task deleted"}
