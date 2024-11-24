@@ -1,7 +1,5 @@
 from typing import Optional
-
-from pydantic import BaseModel
-
+from pydantic import BaseModel, ConfigDict
 from src.schemas.user import UserRead
 
 
@@ -18,8 +16,7 @@ class TaskRead(TaskBase):
     id: int
     owner: Optional[UserRead] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TaskUpdate(TaskBase):
