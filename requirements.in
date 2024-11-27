@@ -2,3 +2,6 @@ fastapi
 starlette
 pytest
 pydantic
+pytest-asyncio
+httpx
+sqlalchemy
