@@ -130,4 +130,3 @@ We welcome contributions! To contribute:
 - Extend the API to include additional features like task priorities and deadlines.
 - Add OAuth-based user authentication.
 - Deploy the application using Docker and Kubernetes for scalability.
-  """
