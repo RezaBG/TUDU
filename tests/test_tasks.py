@@ -4,6 +4,9 @@ import logging
 import pytest
 import pytest_asyncio
 
+from tests.conftest import test_engine
+from sqlalchemy.inspection import inspect
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -19,6 +22,11 @@ def generate_task_payload(title="Test Task", description="Task Description", own
         "description": description,
         "owner_id": owner_id
     }
+
+def test_inspect_table():
+    inspector = inspect(test_engine)
+    print("Tables in the database:", inspector.get_table_names())
+
 
 @pytest_asyncio.fixture
 async def setup_task(client, setup_user):
