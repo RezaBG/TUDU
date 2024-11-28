@@ -6,7 +6,7 @@ from src.schemas.user import UserRead
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
-    status: Optional[str] = "pending"
+    status: Optional[str] = None
 
 
 class TaskCreate(TaskBase):

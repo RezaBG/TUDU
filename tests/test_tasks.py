@@ -13,14 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 # Helper function for task payload
-def generate_task_payload(title="Test Task", description="Task Description", owner_id=None):
+def generate_task_payload(title="Test Task", description="Task Description", owner_id=None, status="pending"):
     """
     Generates a task payload for testing.
     """
     return {
         "title": title,
         "description": description,
-        "owner_id": owner_id
+        "owner_id": owner_id,
+        "status": status,
     }
 
 def test_inspect_table():
@@ -48,6 +49,7 @@ async def test_create_task(client, setup_task):
     Tests the creation of a task.
     """
     assert setup_task["title"] == "Test Task"
+    assert setup_task["status"] == "pending"
     logger.info("Create task test passed.")
 
 
@@ -70,15 +72,22 @@ async def test_update_task(client, setup_task):
     """
     try:
         task_id = setup_task["id"]
-        # owner_id = setup_task["owner"]["id"]
         owner_id = setup_task.get("owner", {}).get("id", None)
         assert owner_id, "Owner ID is missing in the task data"
-        payload = generate_task_payload(title="Updated Task", description="Updated Description", owner_id=owner_id)
+
+        payload = generate_task_payload(
+            title="Updated Task",
+            description="Updated Description",
+            owner_id=owner_id,
+            status="completed"
+        )
+
         response = await asyncio.wait_for(
             client.put(f"/tasks/{task_id}", json=payload), timeout=5
         )
         assert response.status_code == 200
         assert response.json()["title"] == "Updated Task"
+        assert response.json()["status"] == "completed"
         logger.info("Update task passed for ID: %s with payload: %s", task_id, payload)
     except asyncio.TimeoutError:
         logger.error("Timeout occurred while updating task.")
@@ -134,3 +143,51 @@ async def test_delete_task_invalid_id(client):
     assert response.status_code == 404
     assert response.json()["detail"] == "Task with ID 9999 not found"
     logger.info("Delete task invalid ID test passed.")
+
+
+
+@pytest.mark.asyncio
+async def test_filter_tasks_by_user(client, setup_user):
+    """
+    Tests filtering tasks by user.
+    """
+    owner_id = setup_user["id"]
+    # Create tasks with different statuses for the user
+    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status="pending"))
+    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status="in-progress"))
+    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status="completed"))
+
+    # Corrected the URL for user filtering
+    response = await client.get(f"/tasks/user/{owner_id}")
+
+    logger.info(f"Response status code: {response.status_code}")
+    logger.info(f"Response body: {response.json()}")
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) > 0
+    assert all(task["owner"]["id"] == owner_id for task in tasks)
+    logger.info("Filter tasks by user test passed.")
+
+
+
+
+
+@pytest.mark.asyncio
+async def test_filter_tasks_by_status(client, setup_user):
+    """
+    Tests filtering tasks by status.
+    """
+    owner_id = setup_user["id"]
+    # Create tasks with different statuses
+    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status="pending"))
+    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status="in-progress"))
+    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status="completed"))
+
+    # Corrected the status value in the URL to match the status in the database
+    response = await client.get("/tasks/status/in-progress")
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) > 0
+    assert all(task["status"] == "in-progress" for task in tasks)
+    logger.info("Filter tasks by status test passed.")
