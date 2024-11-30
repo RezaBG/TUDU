@@ -170,9 +170,6 @@ async def test_filter_tasks_by_user(client, setup_user):
     logger.info("Filter tasks by user test passed.")
 
 
-
-
-
 @pytest.mark.asyncio
 async def test_filter_tasks_by_status(client, setup_user):
     """
