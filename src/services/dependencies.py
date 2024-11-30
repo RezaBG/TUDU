@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from src.schemas import UserRead
+from src.schemas.user import CurrentUser
 from src.services.database import SessionLocal
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -27,7 +27,7 @@ def get_db() -> Session:
 # Dependency for getting the current authenticated user
 def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> UserRead:
+) -> CurrentUser:
     from src.models.user import User  # Import here to avoid circular dependency
 
     try:
@@ -47,7 +47,7 @@ def get_current_user(
             )
 
         # Validate and return the user with UserRead schema
-        return UserRead.model_validate(user)
+        return CurrentUser(username=user.username)
     except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
