@@ -1,5 +1,6 @@
 from .task import TaskCreate, TaskRead, TaskUpdate
 from .user import UserCreate, UserRead, UserUpdate
+from .response import ResponseModel
 
 __all__ = [
     "UserCreate",
@@ -8,4 +9,5 @@ __all__ = [
     "TaskCreate",
     "TaskRead",
     "TaskUpdate",
+    "ResponseModel"
 ]

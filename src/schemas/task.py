@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict
 from src.schemas.user import UserRead
 
@@ -6,7 +6,7 @@ from src.schemas.user import UserRead
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
-    status: Optional[str] = None
+    status: Optional[Literal["pending", "completed", "in-process"]] = None
 
 
 class TaskCreate(TaskBase):
