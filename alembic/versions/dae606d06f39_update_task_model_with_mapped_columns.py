@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.sql import table, column
 
 
 # revision identifiers, used by Alembic.
@@ -18,9 +19,16 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# Define the tasks table for the migration context
+tasks_table = table(
+    "tasks",
+    column("status", sa.String),
+)
+
+
 def upgrade() -> None:
     # Set default value for existing NULLs
-    op.execute("UPDATE tasks SET status = 'pending' WHERE status IS NULL")
+    op.execute(tasks_table.update().where(tasks_table.c.status.is_(None)).values(status='pending'))
 
     # Adjustments to 'tasks' table
     op.alter_column(
