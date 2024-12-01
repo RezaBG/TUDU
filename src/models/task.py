@@ -1,7 +1,13 @@
-from sqlalchemy import ForeignKey, Integer, String
+from sqlalchemy import ForeignKey, Integer, String, Enum
+from enum import Enum as PyEnum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
-
 from src.services.database import Base
+
+
+class TaskStatus(PyEnum):
+    PENDING = "pending"
+    IN_PROGRESS = "in-progress"
+    COMPLETED = "completed"
 
 
 class Task(Base):
@@ -11,7 +17,7 @@ class Task(Base):
     title: Mapped[str] = mapped_column(String, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String, index=True)
     owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    status: Mapped[str] = mapped_column(String, default="pending", nullable=False)
+    status: Mapped[str] = mapped_column(Enum(TaskStatus), default=TaskStatus.PENDING.value, nullable=False)
 
     # Relationship to user
     owner = relationship("User", back_populates="todos")

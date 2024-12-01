@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
+from fastapi import Path
 
 
-from src.models import Task, User
+from src.models import Task, User, TaskStatus
 from src.schemas import TaskCreate, TaskRead, TaskUpdate
 from src.services.dependencies import get_db
 from src.services.crud import get_item_by_id, create_item
-from src.schemas.response import ResponseModel
+
 
 import logging
 
@@ -149,12 +150,12 @@ def update_task(
         )
 
 @router.delete("/tasks/{task_id}",
-               response_model=ResponseModel,
-               status_code=status.HTTP_200_OK,
+               status_code=status.HTTP_204_NO_CONTENT,
                summary="Delete task",
                description="Delete an existing task by its ID."
                            " Returns a 204 status code if successful.",
                responses={
+                   204: {"description": "Task Deleted Successfully"},
                    404: {"description": "Task Not Found"},
                    500: {"description": "Internal Server Error"},
                },
@@ -182,10 +183,6 @@ def delete_task(
     db.commit()
 
     logger.info(f"Task ID '{task_id}' deleted successfully")
-    return {
-        "status": "success",
-        "message": f"Task ID '{task_id}' deleted successfully",
-    }
 
 
 @router.get("/tasks/user/{user_id}",
@@ -212,15 +209,18 @@ def get_tasks_by_user(user_id: int, db: Session = Depends(get_db)):
             response_model=list[TaskRead],
             summary="Get all tasks by status",
             description="Retrieve all tasks with a specific status"
-                        " (e.g., 'completed', 'pending').",
+                        " (e.g., 'completed', 'pending', 'in-progress').",
             responses={
                 404: {"description": "No tasks found with the specified status"},
                 500: {"description": "Internal Server Error"},
             },
 )
-def get_tasks_by_status(task_status: str, db: Session = Depends(get_db)):
+def get_tasks_by_status(
+        task_status: TaskStatus = Path(..., description="The status to filter task by"),
+        db: Session = Depends(get_db)
+):
     logger.info(f"Filtering tasks by status: {task_status}")
-    tasks = db.query(Task).filter(Task.status == task_status).all()
+    tasks = db.query(Task).filter(Task.status == task_status.value).all()
     if not tasks:
         logger.info(f"No tasks found for status: {task_status}")
         raise HTTPException(status_code=404, detail=f"No tasks found with"

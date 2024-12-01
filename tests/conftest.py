@@ -78,7 +78,10 @@ async def setup_user(client):
     }
     response = await client.post("/users", json=payload)
     assert response.status_code == 201
-    return response.json()
+
+    # Extract the actual user data from the response
+    user_data = response.json()["data"]
+    return user_data
 
 
 @pytest.fixture(autouse=True)
