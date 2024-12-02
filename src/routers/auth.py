@@ -26,7 +26,7 @@ def verify_password(plain_password, hashed_password):
 
 # Helper function to get a user by username
 def get_user_by_username(db: Session, username: str):
-    return db.query(User).filter_by(username=username).first()
+    return db.query(User).filter(User.username == username, User.disabled == False).first()
 
 
 def format_response(status: str, message: str, data: Optional[dict] = None):
