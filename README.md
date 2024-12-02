@@ -118,7 +118,7 @@ We welcome contributions! To contribute:
 1. Fork the repository.
 2. Create a feature branch:
    ```bash
-   git checkout -b feature/your-feature-name
+   git branch feature/your-feature-name
    ```
 3. Make your changes and run tests.
 4. Submit a pull request with a clear description of your changes.
