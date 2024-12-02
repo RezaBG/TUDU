@@ -18,7 +18,7 @@ def generate_task_payload(
         title="Test Task",
         description="Task Description",
         owner_id=None,
-        status=TaskStatus.PENDING.value,
+        status=TaskStatus.PENDING,
 ):
     """
     Generates a task payload for testing.
@@ -27,7 +27,7 @@ def generate_task_payload(
         "title": title,
         "description": description,
         "owner_id": owner_id,
-        "status": status,
+        "status": status.name,
     }
 
 def test_inspect_table():
@@ -215,9 +215,9 @@ async def test_filter_tasks_by_user(client, setup_user):
     """
     owner_id = setup_user["id"]
     # Create tasks with different statuses for the user
-    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status="pending"))
-    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status="in-progress"))
-    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status="completed"))
+    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status=TaskStatus.PENDING))
+    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status=TaskStatus.IN_PROGRESS))
+    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status=TaskStatus.COMPLETED))
 
     # Corrected the URL for user filtering
     response = await client.get(f"/tasks/user/{owner_id}")
@@ -240,9 +240,9 @@ async def test_filter_tasks_by_status(client, setup_user):
     owner_id = setup_user["id"]
 
     # Create tasks with different statuses
-    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status=TaskStatus.PENDING.value))
-    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status=TaskStatus.IN_PROGRESS.value))
-    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status=TaskStatus.COMPLETED.value))
+    await client.post("/tasks", json=generate_task_payload(title="Task 1", description="Description 1", owner_id=owner_id, status=TaskStatus.PENDING))
+    await client.post("/tasks", json=generate_task_payload(title="Task 2", description="Description 2", owner_id=owner_id, status=TaskStatus.IN_PROGRESS))
+    await client.post("/tasks", json=generate_task_payload(title="Task 3", description="Description 3", owner_id=owner_id, status=TaskStatus.COMPLETED))
 
     # Make the Get request
     response = await client.get("/tasks/status/in-progress")

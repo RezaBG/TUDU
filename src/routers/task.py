@@ -193,7 +193,10 @@ def delete_task(
                 404: {"description": "Task not found for this user"},
                 500: {"description": "Internal Server Error"},
             },)
-def get_tasks_by_user(user_id: int, db: Session = Depends(get_db)):
+def get_tasks_by_user(
+        user_id: int,
+        db: Session = Depends(get_db)
+):
     tasks = db.query(Task).filter(Task.owner_id == user_id).all()
     if not tasks:
         logger.info(f"No tasks found for user with ID {user_id}")
@@ -216,11 +219,11 @@ def get_tasks_by_user(user_id: int, db: Session = Depends(get_db)):
             },
 )
 def get_tasks_by_status(
-        task_status: TaskStatus = Path(..., description="The status to filter task by"),
+        task_status: str = Path(..., description="The status to filter task by"),
         db: Session = Depends(get_db)
 ):
-    logger.info(f"Filtering tasks by status: {task_status}")
-    tasks = db.query(Task).filter(Task.status == task_status.value).all()
+    logger.debug(f"Filtering tasks by status: {task_status}")
+    tasks = db.query(Task).filter(Task.status == task_status).all()
     if not tasks:
         logger.info(f"No tasks found for status: {task_status}")
         raise HTTPException(status_code=404, detail=f"No tasks found with"
