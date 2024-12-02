@@ -21,7 +21,8 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     """Upgrade the database schema by adding a status column to the Task table."""
     # Add the new 'status' column to the 'tasks' table
-    op.add_column('tasks', sa.Column('status', sa.String(), nullable=True))
+    # op.add_column('tasks', sa.Column('status', sa.String(), nullable=True))
+    op.add_column('tasks', sa.Column('status', sa.Enum('pending', 'in-progress', 'completed', name='taskstatus'), nullable=True))
 
 def downgrade() -> None:
     """Downgrade the database schema by removing the status column from the tasks table."""
