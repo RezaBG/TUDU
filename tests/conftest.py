@@ -5,6 +5,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from httpx import ASGITransport
 
 from src.main import app
 from src.services.database import Base
@@ -39,7 +40,8 @@ async def client(setup_db):
     """
     Provides an HTTP client for testing FastAPI endpoints.
     """
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
 
 

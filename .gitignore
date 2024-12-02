@@ -4,3 +4,4 @@ guidline-postgres.txt
 .DS_Store
 .idea/
 test.db
+venv/
