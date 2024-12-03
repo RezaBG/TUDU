@@ -11,6 +11,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.sql import table, column
 
+from src.models.task import TaskStatus
+
 
 # revision identifiers, used by Alembic.
 revision: str = 'dae606d06f39'
@@ -28,7 +30,11 @@ tasks_table = table(
 
 def upgrade() -> None:
     # Set default value for existing NULLs
-    op.execute(tasks_table.update().where(tasks_table.c.status.is_(None)).values(status='pending'))
+    op.execute(
+        tasks_table.update()
+        .where(tasks_table.c.status.is_(None))
+        .values(status=TaskStatus.PENDING.name)  # Convert to string
+    )
 
     # Adjustments to 'tasks' table
     op.alter_column(
