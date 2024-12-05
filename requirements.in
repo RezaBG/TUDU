@@ -2,3 +2,10 @@ fastapi
 starlette
 pytest
 pydantic
+pytest-asyncio
+httpx
+sqlalchemy
+passlib[bcrypt]
+bcrypt==3.2.2
+python-jose
+alembic>=1.8.0

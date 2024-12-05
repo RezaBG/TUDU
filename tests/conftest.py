@@ -2,16 +2,22 @@ import os
 
 import pytest
 import pytest_asyncio
+import logging
 from httpx import AsyncClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from httpx import ASGITransport
 
 from src.main import app
 from src.services.database import Base
 
+
+logging.basicConfig(level=logging.DEBUG)
+
 # Fetch test database URL from environment variable
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
+logging.debug(f"Using TEST_DATABASE_URL: {TEST_DATABASE_URL}")
+logging.debug(f"Database file path: {os.path.abspath(TEST_DATABASE_URL.split('///')[-1])}")
 
 # Set up the SQLAlchemy engine for the test database
 test_engine = create_engine(
@@ -30,8 +36,20 @@ def setup_db():
     Sets up the test database for the duration of the test module.
     Creates tables at the start and drops them at the end.
     """
+    logging.debug(f"Tables created for test: {Base.metadata.tables.keys()}")
+
+    # Create all tables
     Base.metadata.create_all(bind=test_engine)
+    logging.debug(f"Tables created in the database: {list(Base.metadata.tables.keys())}")
+
+    # Log existing tables in the database
+    with test_engine.connect() as connection:
+        result = connection.execute(text("SELECT name FROM sqlite_master WHERE type='table';"))
+        tables = [row[0] for row in result]
+        logging.debug(f"Tables created in the database: {tables}")
+
     yield
+    logging.debug(f"Dropping all database tables...")
     Base.metadata.drop_all(bind=test_engine)
 
 
@@ -60,7 +78,10 @@ async def setup_user(client):
     }
     response = await client.post("/users", json=payload)
     assert response.status_code == 201
-    return response.json()
+
+    # Extract the actual user data from the response
+    user_data = response.json()["data"]
+    return user_data
 
 
 @pytest.fixture(autouse=True)
@@ -68,5 +89,6 @@ def reset_database():
     """
     Resets the database before each test to ensure isolation.
     """
+    logging.debug("Resetting database: Dropping and recreating tables...")
     Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)

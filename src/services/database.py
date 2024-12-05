@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Fetch database URL from environment variable, default to a PostgreSQL database for dev
+# Fetch database URL from environment variable, default to a PostgresSQL database for dev
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql+psycopg2://dev:dev@localhost/tudu"
 )

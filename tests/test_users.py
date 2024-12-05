@@ -20,7 +20,8 @@ async def test_create_user(client):
     }
     response = await client.post("/users", json=payload)
     assert response.status_code == 201
-    assert response.json()["username"] == payload["username"]
+    # assert response.json()["username"] == payload["username"]
+    assert response.json()["data"]["username"] == payload["username"]
     logger.info("Create user passed for payload: %s", payload)
 
 
@@ -29,10 +30,10 @@ async def test_get_user(client, setup_user):
     """
     Tests retrieving an existing user by ID.
     """
-    user_id = setup_user["id"]
+    user_id = setup_user.get("id")
     response = await client.get(f"/users/{user_id}")
     assert response.status_code == 200
-    assert response.json()["username"] == setup_user["username"]
+    assert response.json()["data"]["username"] == setup_user["username"]
     logger.info("Get user passed for ID: %s", user_id)
 
 
