@@ -45,7 +45,7 @@ async def setup_task(client, setup_user):
         "title": "Test Task",
         "description": "Task Description",
         "owner_id": owner_id,
-        "status": TaskStatus.PENDING.value,
+        "status": TaskStatus.PENDING.name,
     }
     response = await client.post(
         "/tasks",
@@ -67,7 +67,7 @@ async def test_create_task(setup_task):
     Tests the creation of a task.
     """
     assert setup_task["title"] == "Test Task"
-    assert setup_task["status"] == "pending"
+    assert setup_task["status"] == "PENDING"
     logger.info("Create task test passed.")
 
 

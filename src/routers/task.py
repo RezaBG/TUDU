@@ -60,6 +60,13 @@ def create_task(
     return new_task
 
 
+@router.get("/tasks", response_model = list[TaskRead])
+def get_tasks(db: Session = Depends(get_db)):
+    tasks = db.query(Task).all()
+    if not tasks:
+        raise HTTPException(status_code = 404, detail = "No tasks found")
+    return tasks
+
 
 @router.get("/tasks/{task_id}",
             response_model=TaskRead,
