@@ -1,14 +1,7 @@
-from sqlalchemy import ForeignKey, Integer, String, Enum
-from enum import Enum as PyEnum
+from sqlalchemy import ForeignKey, Integer, String, Enum, event
 from sqlalchemy.orm import relationship, Mapped, mapped_column
+from src.enums.task_status import TaskStatus
 from src.services.database import Base
-
-
-class TaskStatus(PyEnum):
-    PENDING = "PENDING"
-    IN_PROGRESS = "IN-PROGRESS"
-    COMPLETED = "COMPLETED"
-
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -17,7 +10,12 @@ class Task(Base):
     title: Mapped[str] = mapped_column(String, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String, index=True)
     owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), default=TaskStatus.PENDING, nullable=False)
+    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), default=TaskStatus.PENDING, nullable=False)  # Pass enum, not .value
+
 
     # Relationship to user
     owner = relationship("User", back_populates="todos")
+
+@event.listens_for(Task, "before_insert")
+def debug_before_insert(mapper, connection, target):
+    print(f"Task being inserted: {target.title}, {target.status}")

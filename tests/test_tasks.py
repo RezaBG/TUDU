@@ -3,7 +3,7 @@ import logging
 
 import pytest
 import pytest_asyncio
-from src.models import TaskStatus
+from src.enums.task_status import TaskStatus
 
 from tests.conftest import test_engine
 from sqlalchemy.inspection import inspect
@@ -18,17 +18,15 @@ def generate_task_payload(
         title="Test Task",
         description="Task Description",
         owner_id=None,
-        status=TaskStatus.PENDING,
+        status=TaskStatus.PENDING.value  # Use TaskStatus enum
 ):
-    """
-    Generates a task payload for testing.
-    """
     return {
         "title": title,
         "description": description,
         "owner_id": owner_id,
-        "status": status.name,
+        "status": status  # Convert enum to string (e.g., "pending")
     }
+
 
 def test_inspect_table():
     inspector = inspect(test_engine)
@@ -46,7 +44,7 @@ async def setup_task(client, setup_user):
         "title": "Test Task",
         "description": "Task Description",
         "owner_id": owner_id,
-        "status": TaskStatus.PENDING.name,
+        "status": TaskStatus.PENDING.value,
     }
     response = await client.post(
         "/tasks",
@@ -68,7 +66,7 @@ async def test_create_task(setup_task):
     Tests the creation of a task.
     """
     assert setup_task["title"] == "Test Task"
-    assert setup_task["status"] == "PENDING"
+    assert setup_task["status"] == TaskStatus.PENDING.value
     logger.info("Create task test passed.")
 
 
@@ -98,7 +96,7 @@ async def test_update_task(client, setup_task):
             title="Updated Task",
             description="Updated Description",
             owner_id=owner_id,
-            status="completed"
+            status= TaskStatus.COMPLETED.value,
         )
 
         response = await asyncio.wait_for(

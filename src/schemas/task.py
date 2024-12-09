@@ -1,15 +1,15 @@
-from typing import Literal, Optional
-from pydantic import BaseModel
-
-
+from typing import Optional
+from pydantic import BaseModel, validator
+from src.enums.task_status import TaskStatus
 from src.schemas.user import UserRead
-
 
 class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
-    status: Optional[Literal["PENDING", "IN_PROGRESS", "COMPLETED"]] = None
-
+    status: Optional[TaskStatus] = None
+    
+    class Config:
+        use_enum_values = True 
 
 class TaskCreate(TaskBase):
     owner_id: int
@@ -22,9 +22,14 @@ class TaskRead(TaskBase):
     # model_config = ConfigDict(from_attributes=True)
     class Config:
         orm_mode = True
+        use_enum_values = True 
 
 
 class TaskUpdate(TaskBase):
     title: Optional[str] = None
     description: Optional[str] = None
-    status: Optional[Literal["PENDING", "IN_PROGRESS", "COMPLETED"]] = None
+    status: Optional[TaskStatus] = None
+
+    class Config:
+        orm_mode = True
+        use_enum_values = True 

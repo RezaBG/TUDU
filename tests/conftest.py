@@ -92,3 +92,14 @@ def reset_database():
     logging.debug("Resetting database: Dropping and recreating tables...")
     Base.metadata.drop_all(bind=test_engine)
     Base.metadata.create_all(bind=test_engine)
+
+
+@pytest.fixture(scope="function")
+def db(setup_db):
+    """Provide a transactional database session for a test."""
+    session = TestSessionLocal()
+    try:
+        yield session
+    finally:
+        session.rollback()
+        session.close()

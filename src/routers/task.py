@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Body, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from fastapi import Path
 
@@ -24,39 +24,27 @@ router = APIRouter()
 @router.post("/tasks",
              response_model=TaskRead,
              status_code=status.HTTP_201_CREATED,
-             summary="Create a Task",
-             description="Create a new task by providing the title, "
-                         "description, and owner ID.",
-             responses={
-                 400: {"description": "Bad Request - Invalid Task Data"},
-                 404: {"description": "Owner Not Found"},
-                 500: {"description": "Internal Server Error"},
-             },
-)
-def create_task(
-        task: TaskCreate,
-        db: Session = Depends(get_db),
-):
+             summary="Create a Task")
+def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     logger.info(f"Creating task with title: {task.title} and status: {task.status}")
+    logger.info(f"Received task payload: {task}")
+    logger.info(f"Database task status values: {[e.value for e in TaskStatus]}")
 
-    # Validate what the owner exists
+    # Ensure owner exists
     owner = db.query(User).filter_by(id=task.owner_id).first()
     if not owner:
-        logger.error(f"Owner with ID {task.owner_id} not found")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Owner with ID {task.owner_id} not found",
-        )
+        raise HTTPException(status_code=404, detail=f"Owner with ID {task.owner_id} not found")
 
+    # Ensure task.status is in lowercase to match DB enum
     task_data = {
         "title": task.title,
         "description": task.description,
         "owner_id": task.owner_id,
-        "status": task.status,
+        "status": task.status.value if isinstance(task.status, TaskStatus) else task.status
     }
+
     new_task = create_item(Task, task_data, db)
-    logger.info(f"Task '{new_task.title}' created successfully with ID {new_task.id}"
-                f" and status: {new_task.status}")
+    logger.info(f"Task '{new_task.title}' created successfully with ID {new_task.id} and status: {new_task.status}")
     return new_task
 
 
@@ -230,6 +218,7 @@ def get_tasks_by_status(
         db: Session = Depends(get_db)
 ):
     logger.debug(f"Filtering tasks by status: {task_status}")
+    task_status = task_status.lower()  # Ensure the status matches the database enum
     tasks = db.query(Task).filter(Task.status == task_status).all()
     if not tasks:
         logger.info(f"No tasks found for status: {task_status}")
