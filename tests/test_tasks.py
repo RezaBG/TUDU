@@ -42,6 +42,7 @@ async def setup_task(client, setup_user):
     """
     owner_id = setup_user.get("id")
     payload = {
+        "id": 2,
         "title": "Test Task",
         "description": "Task Description",
         "owner_id": owner_id,

@@ -5,9 +5,9 @@ from src.services.database import Base
 
 
 class TaskStatus(PyEnum):
-    PENDING = "pending"
-    IN_PROGRESS = "in-progress"
-    COMPLETED = "completed"
+    PENDING = "PENDING"
+    IN_PROGRESS = "IN-PROGRESS"
+    COMPLETED = "COMPLETED"
 
 
 class Task(Base):
