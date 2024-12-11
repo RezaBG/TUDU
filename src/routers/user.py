@@ -21,9 +21,39 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+@router.get("/users", response_model=ResponseModel, summary="Get all users")
+async def get_all_users(db: Session = Depends(get_db)) -> ResponseModel:
+    """Fetch all users from the database"""
+    try:
+        users = db.query(User).all()
+
+        if not users:
+            return format_response(
+                status="success",
+                message="No users found",
+                data=[]
+            )
+
+        users_data = [
+            {"id": user.id, "username": user.username, "email": user.email}
+            for user in users
+        ]
+
+        return format_response(
+            status="success",
+            message=f"Found {len(users)} user(s).",
+            data=users_data
+        )
+
+    except Exception as e:
+        logger.error(f"Error fetching users: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An internal error occurred. Please try again later."
+        )
 
 
-@router.post("/users",
+@router.post("/user",
              response_model=ResponseModel,
              status_code=status.HTTP_201_CREATED,
              summary="Create a User",
