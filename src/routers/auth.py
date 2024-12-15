@@ -1,104 +1,100 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
-from src.services.dependencies import get_db, get_current_user
-from src.services.auth import create_access_token
-from src.models.user import User
 from fastapi.security import OAuth2PasswordRequestForm
-from src.schemas.user import CurrentUser
-from src.schemas.response import ResponseModel
 from typing import Optional
 import logging
 import os
 
-router = APIRouter()
+from src.services.dependencies import get_db, get_current_user
+from src.services.auth import create_access_token
+from src.models.user import User
+from src.schemas.user import CurrentUser
+from src.schemas.response import ResponseModel
 
-logging.basicConfig(level=logging.DEBUG)
+# Initialize router and logger
+router = APIRouter()
+logger = logging.getLogger("auth")
+logger.setLevel(logging.INFO)
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-
 # Helper function to verify the user's password
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify that a plain password matches a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 # Helper function to get a user by username
-def get_user_by_username(db: Session, username: str):
+def get_user_by_username(db: Session, username: str) -> Optional[User]:
+    """Fetch an active user by username."""
     return db.query(User).filter(User.username == username, User.disabled == False).first()
 
+# New function to hash a password before storing it
+def get_password_hash(password: str) -> str:
+    """Hash a password using bcrypt."""
+    return pwd_context.hash(password)
 
-def format_response(status: str, message: str, data: Optional[dict] = None):
-    if data is None:
-        data = {}
-    return {
-        "status": status,
-        "message": message,
-        "data": data,
-    }
+# New function to create a user with hashed password
+def create_user(db: Session, username: str, email: str, password: str, is_admin: bool = False):
+    """Fetch a new user with hashed password."""
+    hashed_password = get_password_hash(password)
+    new_user = User(username=username, email=email, hashed_password=hashed_password, is_admin=is_admin)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
-@router.post("/token", response_model=ResponseModel)
+@router.post(
+    "/token",
+    response_model=ResponseModel,
+    summary="Login and get access token"
+)
 async def login_for_access_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-):
+) -> ResponseModel:
     """
-    Login to the application and return a JWT token
+    Login to the application and return a JWT token.
     """
-    try:
-        if os.getenv("ENVIRONMENT", "development") == "development":
-            logging.debug(f"Received username: {form_data.username}")
+    # Log the username for debugging
+    if os.getenv("ENVIRONMENT") == "development":
+        logger.debug(f"Login attempt for username: {form_data.username}")
 
-        # Fetch user
-        user = get_user_by_username(db, form_data.username)
-        if not user or not verify_password(form_data.password, user.hashed_password):
-            logging.debug(f"Invalid credentials or user not found")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        # Generate JWT Token
-        access_token = create_access_token(data={"sub": user.username})
-        logging.debug(f"Generated token for user: {user.username}")
-        return format_response(
-            status="success",
-            message="Authentication successful.",
-            data={"access_token": access_token, "token_type": "bearer"},
-        )
-
-    except ValueError as ve:
-        logging.error(f"Validation error during authentication: {ve}")
+    # Validate user credentials
+    user = get_user_by_username(db, form_data.username)
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        logger.warning(f"Invalid credentials for username: {form_data.username}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid input data. Please verify and try again.",
-        )
-    except Exception as e:
-        logging.error(f"Unexpected error during authentication: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An internal error occurred. Please try again later.",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Generate and return JWT Token
+    access_token = create_access_token(data={"sub": user.username})
+    logger.debug(f"Token generated successfully for user name: {user.username}")
+    return ResponseModel(
+        status="success",
+        message="Authentication successful.",
+        data={"access_token": access_token, "token_type": "bearer"},
+    )
 
-@router.get("/protected", response_model=ResponseModel)
+
+@router.get(
+    "/protected",
+    response_model=ResponseModel,
+    summary="Protected route"
+)
 async def protected_route(
         current_user: CurrentUser = Depends(get_current_user),
-):
+) -> ResponseModel:
     """
     Protected endpoint that requires authentication
     """
-    try:
-        logging.info(f"Access granted to user: {current_user.username}")
-        return format_response(
-            status="success",
-            message=f"Hello, {current_user.username}! You have access to this protected route.",
-        )
-    except Exception as e:
-        logging.error(f"Error in protected route for user : {current_user.username}, Error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An internal error occurred, Please try again later.",
-        )
+    logger.info(f"Protected route assessed by user: {current_user.username}")
+    return ResponseModel(
+        status="success",
+        message=f"Hello, {current_user.username}! You have access to this protected route.",
+    )

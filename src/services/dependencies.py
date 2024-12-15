@@ -1,4 +1,5 @@
 import os
+import logging
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -7,6 +8,13 @@ from sqlalchemy.orm import Session
 
 from src.schemas.user import CurrentUser
 from src.services.database import SessionLocal
+from src.models.user import User
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -26,10 +34,9 @@ def get_db() -> Session:
 
 # Dependency for getting the current authenticated user
 def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(get_db)
 ) -> CurrentUser:
-    from src.models.user import User  # Import here to avoid circular dependency
-
     try:
         # Decode the JWT token
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -47,8 +54,15 @@ def get_current_user(
             )
 
         # Validate and return the user with UserRead schema
-        return CurrentUser(username=user.username)
-    except JWTError:
+        return CurrentUser(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            disabled=user.disabled,
+            is_admin=user.is_admin
+        )
+    except JWTError as e:
+        logger.error(f"JWT Error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",

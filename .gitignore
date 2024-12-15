@@ -5,3 +5,4 @@ guidline-postgres.txt
 .idea/
 test.db
 venv/
+text.md

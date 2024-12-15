@@ -1,232 +1,243 @@
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Path
 from sqlalchemy.orm import Session
-from fastapi import Path
 
-
-from src.models import Task, User, TaskStatus
-from src.schemas import TaskCreate, TaskRead, TaskUpdate
-from src.services.dependencies import get_db
+from src.models import Task, User
+from src.schemas import TaskCreate, TaskUpdate
+from src.schemas.response import ResponseModel
+from src.schemas.user import CurrentUser
+from src.services.dependencies import get_db, get_current_user
 from src.services.crud import get_item_by_id, create_item
-
+from src.enums.task_status import TaskStatus
 
 import logging
 
+# Logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-
-@router.post("/tasks",
-             response_model=TaskRead,
-             status_code=status.HTTP_201_CREATED,
-             summary="Create a Task",
-             description="Create a new task by providing the title, "
-                         "description, and owner ID.",
-             responses={
-                 400: {"description": "Bad Request - Invalid Task Data"},
-                 404: {"description": "Owner Not Found"},
-                 500: {"description": "Internal Server Error"},
-             },
-)
-def create_task(
-        task: TaskCreate,
-        db: Session = Depends(get_db),
-):
-    logger.info(f"Creating task with title: {task.title} and status: {task.status}")
-
-    # Validate what the owner exists
-    owner = db.query(User).filter_by(id=task.owner_id).first()
-    if not owner:
-        logger.error(f"Owner with ID {task.owner_id} not found")
+# Helper function for task validation
+def validate_task_existence(task_id: int, db: Session, current_user: CurrentUser) -> Task:
+    """
+    Ensure that a task exists and belongs to the current user.
+    """
+    task = get_item_by_id(Task, task_id, db)
+    if not task:
+        logger.warning(f"Task with ID '{task_id}' not found.")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Owner with ID {task.owner_id} not found",
+            detail=f"Task with ID '{task_id}' not found."
+        )
+    if task.owner_id != current_user.id:
+        logger.warning(f"Unauthorized access: Task ID '{task_id}' is not owned by User ID '{current_user.id}'.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to access this task."
+        )
+    return task
+
+
+@router.post("/tasks",
+             response_model=ResponseModel,
+             status_code=status.HTTP_201_CREATED,
+             summary="Create a Task")
+def create_task(
+        task: TaskCreate,
+        db: Session = Depends(get_db)
+) -> ResponseModel:
+    """
+    Create a new task for the authenticated user.
+    """
+    owner = db.query(User).filter_by(id=task.owner_id).first()
+    if not owner:
+        logger.warning(f"Task creation failed: Owner with ID '{task.owner_id}' not found.")
+        raise HTTPException(
+            status_code=404,
+            detail=f"Owner with ID '{task.owner_id}' not found."
+        )
+    logger.debug(f"Received task status: {task.status}")
+
+    task_status = task.status.lower()
+    logger.debug(f"Task status after conversion: {task_status}")
+
+    try:
+        # Make sure to use TaskStatus enum properly (ensure it's using the correct value)
+        task_status = TaskStatus[task.status.lower()]
+        logger.debug(f"Task status after conversion: {task_status}")
+    except KeyError:
+        logger.warning(f"Invalid task status: {task.status}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid task status: '{task.status}'. Allowed values are: 'pending', 'in-progress', 'completed'."
         )
 
     task_data = {
         "title": task.title,
         "description": task.description,
         "owner_id": task.owner_id,
-        "status": task.status,
+        "status": task_status.value,
     }
-    new_task = create_item(Task, task_data, db)
-    logger.info(f"Task '{new_task.title}' created successfully with ID {new_task.id}"
-                f" and status: {new_task.status}")
-    return new_task
 
+    new_task = create_item(Task, task_data, db)
+    logger.info(f"Task '{new_task.title}' created successfully with ID {new_task.id} and status: {new_task.status}")
+    return ResponseModel(
+        status="success",
+        message="Task created successfully.",
+        data={"id": new_task.id, "title": new_task.title, "status": new_task.status}
+    )
+
+
+@router.get("/tasks",
+            response_model=ResponseModel,
+            summary="Get all tasks"
+            )
+def get_tasks(
+        db: Session = Depends(get_db),
+        current_user: CurrentUser = Depends(get_current_user)
+) -> ResponseModel:
+    """
+    Retrieve all tasks belonging to the authenticated user.
+    """
+    tasks = db.query(Task).filter(Task.owner_id == current_user.id).all()
+    if not tasks:
+        logger.info(f"No tasks found for User ID '{current_user.id}'.")
+        return ResponseModel(
+            status="success",
+            message="No tasks found.",
+            data=[]
+        )
+
+    task_data = [{"id": task.id, "title": task.title, "status": task.status, "description": task.description} for task in tasks]
+    logger.info(f"Retrieved {len(tasks)} tasks for User ID '{current_user.id}'.")
+    return ResponseModel(
+        status="success",
+        message="Tasks retrieved successfully.",
+        data=task_data
+    )
 
 
 @router.get("/tasks/{task_id}",
-            response_model=TaskRead,
+            response_model=ResponseModel,
             summary="Get a Task by ID",
-            description="Retrieve a task by unique ID. If the task is not found, a 404 error is returned",
-            responses={
-                404: {"description": "Task Not Found"},
-                500: {"description": "Internal Server Error"},
-            },
 )
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = get_item_by_id(Task, task_id, db)
-    logger.info(f"Retrieved task with ID {task_id}: {task.title}")
-    return task
+def get_task(
+        task_id: int,
+        db: Session = Depends(get_db),
+        current_user: CurrentUser = Depends(get_current_user)
+) -> ResponseModel:
+    """
+    Retrieve a Task by its unique ID.
+    """
+    # Fetch the task from the database
+    task = validate_task_existence(task_id, db, current_user)
+    logger.info(f"Task with ID '{task_id}' retrieved successfully.")
+    return ResponseModel(
+        status="success",
+        message="Task retrieved successfully.",
+        data={"id": task.id, "title": task.title, "status": task.status, "description": task.description}
+    )
 
 
 @router.put("/tasks/{task_id}",
-            response_model=TaskRead,
+            response_model=ResponseModel,
             summary="Update a Task",
-            description="Update an existing task by its ID. Requires the updated title and description",
-            responses={
-                400: {"description": "Bad Request - Invalid Task Update Data"},
-                404: {"description": "Task Not Found"},
-                500: {"description": "Internal Server Error"},
-            },
 )
 def update_task(
         task_id: int,
-        task: TaskUpdate,
-        db: Session = Depends(get_db)
-):
+        task_update: TaskUpdate,
+        db: Session = Depends(get_db),
+        current_user: CurrentUser = Depends(get_current_user)
+) -> ResponseModel:
     """
     Update an existing task by its unique ID.
     """
-    try:
-        # Log the received payload
-        logger.debug(f"Received update payload for task ID {task_id}: {task}")
+    task = validate_task_existence(task_id, db, current_user)
 
-        # Ensure the task exists
-        existing_task = get_item_by_id(
-            Task,
-            task_id,
-            db,
-        )
-        if existing_task is None:
-            logger.warning(f"Task with ID '{task_id}' not found")
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Task with ID '{task_id}' not found",
-            )
-
-        # Check for empty update payload
-        if not any([
-            task.title,
-            task.description,
-            task.status,
-            ]):
-            logger.warning(f"No valid fields provided for update on Task ID '{task_id}'")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No valid fields provided for update on Task ID '{task_id}'",
-            )
-
-        # Update fields
-        if task.title:
-            existing_task.title = task.title
-        if task.description:
-            existing_task.description = task.description
-        if task.status:
-            existing_task.status = task.status
-
-        # Commit changes
-        db.commit()
-        db.refresh(existing_task)
-
-        logger.info(f"Task ID {task_id} updated successfully")
-        return existing_task
-
-    except HTTPException as e:
-        logger.error(f"Error updating task with ID {task_id}: {e}")
-        raise e
-
-    except Exception as e:
-        logger.error(f"Unexpected error while updating task with ID {task_id}: {e}")
+    if not any([task_update.title, task_update.description, task_update.status]):
+        logger.warning(f"No valid fields provided for update on Task ID '{task_id}'.")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while updating the task"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No valid fields provided for update."
         )
+
+    if task_update.title:
+        task.title = task_update.title
+    if task_update.description:
+        task.description = task_update.description
+    if task_update.status:
+        task.status = task_update.status
+
+    db.commit()
+    db.refresh(task)
+    logger.info(f"Task with ID '{task.title}' updated successfully.")
+    return ResponseModel(
+        status="success",
+        message="Task updated successfully.",
+        data={"id": task.id, "title": task.title, "status": task.status, "description": task.description}
+    )
+
 
 @router.delete("/tasks/{task_id}",
-               status_code=status.HTTP_204_NO_CONTENT,
+               response_model=ResponseModel,
                summary="Delete task",
-               description="Delete an existing task by its ID."
-                           " Returns a 204 status code if successful.",
-               responses={
-                   204: {"description": "Task Deleted Successfully"},
-                   404: {"description": "Task Not Found"},
-                   500: {"description": "Internal Server Error"},
-               },
 )
 def delete_task(
         task_id: int,
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
+        current_user: CurrentUser = Depends(get_current_user)
 ):
     """
     Delete an existing task by its unique ID.
     """
-    logger.info(f"Attempting to delete Task ID {task_id}")
-
     # Validation that the task exists
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        logger.warning(f"Task with ID '{task_id}' not found. Deletion aborted.")
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Task with ID '{task_id}' not found",
-        )
-
-    # Proceed with deletion
+    task = validate_task_existence(task_id, db, current_user)
     db.delete(task)
     db.commit()
-
-    logger.info(f"Task ID '{task_id}' deleted successfully")
-
-
-@router.get("/tasks/user/{user_id}",
-            response_model=list[TaskRead],
-            summary="Get all tasks by user",
-            description="Get all tasks by user belonging to a specific user.",
-            responses={
-                404: {"description": "Task not found for this user"},
-                500: {"description": "Internal Server Error"},
-            },)
-def get_tasks_by_user(
-        user_id: int,
-        db: Session = Depends(get_db)
-):
-    tasks = db.query(Task).filter(Task.owner_id == user_id).all()
-    if not tasks:
-        logger.info(f"No tasks found for user with ID {user_id}")
-        raise HTTPException(
-            status_code=404,
-            detail="No tasks found for this user",
-        )
-    logger.info(f"Task found for your ID {user_id}: {tasks}")
-    return tasks
+    logger.info(f"Task ID '{task_id}' deleted successfully by user ID '{current_user.id}'")
+    return ResponseModel(
+        status="success",
+        message="Task deleted successfully.",
+        data=None
+    )
 
 
 @router.get("/tasks/status/{task_status}",
-            response_model=list[TaskRead],
+            response_model=ResponseModel,
             summary="Get all tasks by status",
-            description="Retrieve all tasks with a specific status"
-                        " (e.g., 'completed', 'pending', 'in-progress').",
-            responses={
-                404: {"description": "No tasks found with the specified status"},
-                500: {"description": "Internal Server Error"},
-            },
 )
 def get_tasks_by_status(
         task_status: str = Path(..., description="The status to filter task by"),
-        db: Session = Depends(get_db)
-):
-    logger.debug(f"Filtering tasks by status: {task_status}")
-    tasks = db.query(Task).filter(Task.status == task_status).all()
+        db: Session = Depends(get_db),
+        current_user: CurrentUser = Depends(get_current_user)
+) -> ResponseModel:
+    """
+    Retrieve all tasks with a specific status.
+    """
+    if task_status not in [s.value for s in TaskStatus]:
+        logger.warning(f"Invalid task status '{task_status}'.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid task status: '{task_status}'."
+        )
+
+    tasks = db.query(Task).filter(Task.status == task_status, Task.owner_id == current_user.id).all()
+
     if not tasks:
-        logger.info(f"No tasks found for status: {task_status}")
-        raise HTTPException(status_code=404, detail=f"No tasks found with"
-                                                    f" status '{task_status}'")
-    logger.info(f"Found tasks: {tasks}")
-    return tasks
+        logger.info(f"No tasks found for status '{task_status}'")
+        return ResponseModel(
+            status="success",
+            message="No tasks found with the specified status.",
+            data=[]
+        )
+
+    task_data = [{"id": task.id, "title": task.title, "status": task.status, "description": task.description} for task in tasks]
+    logger.info(f"Found tasks for status '{task_status}': {len(tasks)}")
+    return ResponseModel(
+        status="success",
+        message="Tasks retrieved successfully.",
+        data=task_data
+    )

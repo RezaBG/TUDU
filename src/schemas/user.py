@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict, constr
+from pydantic import BaseModel, EmailStr, constr
 
 class UserBase(BaseModel):
     username: constr(
@@ -22,8 +22,11 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int
+    username: str
+    email: str
 
-    model_config = ConfigDict(from_attributes=True)
+    class Config:
+        from_attributes = True
 
 
 class UserUpdate(BaseModel):
@@ -36,13 +39,13 @@ class UserUpdate(BaseModel):
 
     email: Optional[EmailStr] = None
     disabled: Optional[bool] = None
-    password: Optional[constr(
-        min_length=8,
-    )] = None
+    password: Optional[constr(min_length=8)] = None
     """Password must be at least 8 characters long, but it’s optional for updates."""
 
 
 class CurrentUser(BaseModel):
+    id: int
     username: str
-
-
+    email: EmailStr
+    disabled: Optional[bool] = None
+    is_admin: bool
