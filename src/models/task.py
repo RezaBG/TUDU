@@ -6,11 +6,17 @@ from src.services.database import Base
 class Task(Base):
     __tablename__ = "tasks"
 
+    __table_args__ = {'extend_existing': True}
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String, index=True, nullable=False)
     description: Mapped[str] = mapped_column(String, index=True)
     owner_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
-    status: Mapped[TaskStatus] = mapped_column(Enum(TaskStatus), default=TaskStatus.PENDING, nullable=False)  # Pass enum, not .value
+    status: Mapped[TaskStatus] = mapped_column(
+        Enum(TaskStatus),
+        default=TaskStatus.PENDING,
+        # default="pending",
+        nullable=False)  # Pass enum, not .value
 
 
     # Relationship to user

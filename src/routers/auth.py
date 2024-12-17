@@ -23,6 +23,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Helper function to verify the user's password
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify that a plain password matches a hashed password."""
+    logger.debug(f"Plain password: {plain_password}")
+    logger.debug(f"Hashed password: {hashed_password}")
+    print(f"DEBUG: Plain Password: {plain_password}, Hashed Password: {hashed_password}")
     return pwd_context.verify(plain_password, hashed_password)
 
 
