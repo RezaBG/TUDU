@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Database setup (replace with your actual database configuration)
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://dev:dev@localhost/tudu")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://dev:dev@localhost/tudu2")
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

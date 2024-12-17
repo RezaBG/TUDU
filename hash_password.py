@@ -4,7 +4,7 @@ from passlib.context import CryptContext
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Password to hash
-plain_password = "password123"
+plain_password = "devpassword123"
 hashed_password = pwd_context.hash(plain_password)
 
 print(f"Hashed password: {hashed_password}")

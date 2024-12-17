@@ -42,7 +42,7 @@ Set up the database URLs for both development and testing environments:
 
 - Development (PostgreSQL):
   ```bash
-  export DATABASE_URL="postgresql+psycopg2://dev:dev@localhost/tudu"
+  export DATABASE_URL="postgresql+psycopg2://dev:dev@localhost/tudu2"
   ```
 
 - Testing (SQLite):
